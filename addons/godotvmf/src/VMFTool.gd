@@ -6,6 +6,23 @@ static var intersections: Dictionary = {};
 static var texture_sizes_cache: Dictionary = {};
 static var material_cache: Dictionary = {};
 
+class VMFTransformer:
+	var norender_compileclip = true;
+	var norender_compilenodraw = true;
+	var norender_compilesky = true;
+	var norender_npcclip = true;
+	var norender_compileplayerclip = true;
+	var norender_compilenpcclip = true;
+	var nocollision_compilesky = true;
+
+	func compileplayerclip(solid: StaticBody3D):
+		solid.collision_layer = 1 << 1
+		solid.collision_mask = 1 << 1
+
+	func compilenpcclip(solid: StaticBody3D):
+		solid.collision_layer = 1 << 2
+		solid.collision_mask = 1 << 2
+
 ## Credit: https://github.com/Dylancyclone/VMF2OBJ/blob/master/src/main/java/com/lathrum/VMF2OBJ/dataStructure/VectorSorter.java;
 class VectorSorter:
 	var normal: Vector3;
@@ -40,15 +57,17 @@ class VectorSorter:
 static func clear_caches() -> void:
 	vertex_cache = [];
 	intersections = {};
+	material_cache = {};
+	texture_sizes_cache = {};
 
 static func get_planes_intersection_point(side, side2, side3) -> Variant:
 	var d: Array[int] = [side.id, side2.id, side3.id];
 	d.sort();
 
 	var ihash := hash(d);
-	var isIntersectionDefined: bool = ihash in intersections;
+	var is_intersection_defined: bool = ihash in intersections;
 
-	if isIntersectionDefined:
+	if is_intersection_defined:
 		return intersections[ihash];
 	else:
 		var vertex: Variant = side.plane.value.intersect_3(side2.plane.value, side3.plane.value);
@@ -66,48 +85,42 @@ static func calculate_vertices(side, brush) -> Array[Vector3]:
 
 	var is_vertice_exists = func(vector: Vector3):
 		var hash_value: int = hash(Vector3i(vector));
-		
-		if hash_value in cache:
-			return true;
+		if hash_value in cache: return true;
 
 		cache[hash_value] = 1;
-
 		return false;
 
 	for side2 in brush.side:
-		if side2 == side:
-			continue;
+		if side2 == side: continue;
 
 		for side3 in brush.side:
-			if side2 == side3 or side3 == side:
-				continue;
-
+			if side2 == side3 or side3 == side: continue;
 			var vertex := get_planes_intersection_point(side, side2, side3);
-			if vertex == null:
-				continue;
 
-			if is_vertice_exists.call(vertex):
-				continue;
-
+			if vertex == null or is_vertice_exists.call(vertex): continue;
 			vertices.append(vertex as Vector3);
 
 	vertices = vertices.filter(func(vertex):
-		return not brush.side.any(func(s):
-			return s.plane.value.distance_to(vertex) > 0.2;
-		)
+		return not brush.side.any(func(s): return s.plane.value.distance_to(vertex) > 0.2);
 	);
 
 	var size_normal: Vector3 = side.plane.value.normal.normalized();
-	var vectorSorter: VectorSorter = VectorSorter.new(size_normal, side.plane.vecsum / 3);
+	var vector_sorter: VectorSorter = VectorSorter.new(size_normal, side.plane.vecsum / 3);
 
-	vertices.sort_custom(vectorSorter.sort);
+	vertices.sort_custom(vector_sorter.sort);
 
 	return vertices;
 
-static func get_texture_size(side_material: String) -> Vector2:
-	texture_sizes_cache = texture_sizes_cache if texture_sizes_cache else {};
+static func get_material(material: String):
+	material_cache = material_cache if material_cache else {};
+	if material in material_cache:
+		return material_cache[material];
 
-	var default_texture_size: int = VMFConfig.config.material.defaultTextureSize;
+	material_cache[material] = VMTLoader.get_material(material);
+	return material_cache[material];
+
+static func get_texture_size(side_material: String) -> Vector2:
+	var default_texture_size: int = VMFConfig.materials.default_texture_size;
 	var has_cached_value = side_material in texture_sizes_cache;
 
 	if has_cached_value and texture_sizes_cache[side_material]:
@@ -122,7 +135,9 @@ static func get_texture_size(side_material: String) -> Vector2:
 		return texture_sizes_cache[side_material];
 
 	# NOTE In case if material is blend texture we use texture_albedo param
-	var texture = material.albedo_texture if material is StandardMaterial3D else material.get_shader_parameter('texture_albedo');
+	var texture = material.albedo_texture \
+		if material is BaseMaterial3D \
+		else material.get_shader_parameter('albedo_texture');
 
 	var tsize: Vector2 = texture.get_size() \
 		if texture \
@@ -132,17 +147,9 @@ static func get_texture_size(side_material: String) -> Vector2:
 
 	return tsize;
 
-static func get_material(material: String) -> Material:
-	material_cache = material_cache if material_cache else {};
-
-	if material in material_cache:
-		return material_cache[material];
-
-	material_cache[material] = VTFTool.get_material(material);
-	return material_cache[material];
-
 static func calculate_uv_for_size(side: Dictionary, vertex: Vector3) -> Vector2:
-	var default_texture_size: int = VMFConfig.config.material.defaultTextureSize;
+	var default_texture_size: int = VMFConfig.materials.default_texture_size;
+	texture_sizes_cache = texture_sizes_cache if texture_sizes_cache else {};
 
 	var ux: float = side.uaxis.x;
 	var uy: float = side.uaxis.y;
@@ -156,13 +163,9 @@ static func calculate_uv_for_size(side: Dictionary, vertex: Vector3) -> Vector2:
 	var vshift: float = side.vaxis.shift;
 	var vscale: float = side.vaxis.scale;
 
-	var material = VTFTool.get_material(side.material);
-	
-	if not material:
-		return Vector2(1, 1);
-
-	var tsize: Vector2 = get_texture_size(side.material);
-	var tscale = material.get_meta("scale", Vector2(1, 1));
+	# FIXME Add texture scale from VMF metadata
+	var tscale = Vector2.ONE;
+	var tsize := get_texture_size(side.material);
 
 	var tsx: float = 1;
 	var tsy: float = 1;
@@ -170,9 +173,10 @@ static func calculate_uv_for_size(side: Dictionary, vertex: Vector3) -> Vector2:
 	var th := tsize.y;
 	var aspect := tw / th;
 
-	if material:
-		tsx /= tscale.x;
-		tsy /= tscale.y;
+	# NOTE: Not supported yet
+	# if material:
+	# 	tsx /= tscale.x;
+	# 	tsy /= tscale.y;
 
 	var uv := Vector3(ux, uy, uz);
 	var vv := Vector3(vx, vy, vz);
@@ -183,33 +187,157 @@ static func calculate_uv_for_size(side: Dictionary, vertex: Vector3) -> Vector2:
 	
 	return Vector2(u, v);
 
+## Generates collisions from mesh for each surface. It adds ability to use sufraceprop values
+static func generate_collisions(mesh_instance: MeshInstance3D):
+	var bodies: Array[StaticBody3D] = [];
+	var surface_props = {};
+	var mesh = mesh_instance.mesh;
+	var transformer = VMFTransformer.new();
+	var extend_transformer = Engine.get_main_loop().root.get_node_or_null("VMFExtendTransformer");
+
+	# NOTE: If the mesh is too small then we don't need to generate SteamAudioGeometry for this mesh;
+	var is_allowed_to_generate_steam_audio = mesh.get_aabb().size.length() > 2;
+
+	for surface_idx in range(mesh.get_surface_count()):
+		var material = mesh.surface_get_material(surface_idx);
+		var compilekeys = material.get_meta("compile_keys", []) if material else [];
+		var surface_prop = (material.get_meta("surfaceprop", "default") if material else "default").to_lower();
+
+		if compilekeys.size() > 0:
+			surface_prop = "tool_" + compilekeys[0];
+
+		var is_nocoll = false;
+
+		for key in compilekeys:
+			var transformer_key = "nocollision_" + key;
+
+			if extend_transformer and transformer_key in extend_transformer:
+				is_nocoll = extend_transformer[transformer_key];
+			if is_nocoll: break;
+
+			if transformer_key in transformer:
+				is_nocoll = transformer[transformer_key];
+			if is_nocoll: break;
+
+		if is_nocoll: continue;
+
+		if not surface_prop in surface_props:
+			surface_props[surface_prop] = ArrayMesh.new();
+
+		var array_mesh = surface_props[surface_prop];
+		var arrays = mesh.surface_get_arrays(surface_idx);
+		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays);
+
+		if compilekeys.size() > 0:
+			array_mesh.set_meta("compile_keys", compilekeys);
+	
+	for surface_prop in surface_props.keys():
+		var static_body = StaticBody3D.new();
+		var collision = CollisionShape3D.new();
+		var compilekeys = surface_props[surface_prop].get_meta("compile_keys", []);
+
+		for key in compilekeys:
+			if extend_transformer and key in extend_transformer:
+				extend_transformer[key].call(static_body);
+				continue;
+
+			if key in transformer:
+				transformer[key].call(static_body);
+
+		static_body.name = "surface_prop_" + surface_prop;
+		static_body.set_meta("surface_prop", surface_prop);
+
+		collision.name = "collision";
+		collision.shape = surface_props[surface_prop].create_trimesh_shape();
+
+		static_body.add_child(collision);
+		collision.set_owner(static_body);
+
+		if is_allowed_to_generate_steam_audio:
+			create_steam_audio_geometry(surface_prop, collision);
+
+		mesh_instance.add_child(static_body);
+		VMFUtils.set_owner_recursive(static_body, mesh_instance.get_owner());
+
+static func cleanup_mesh(original_mesh: ArrayMesh):
+	# NOTE Clear surface that has materials in ignore list
+	# FIXME Currently we don't have a way to remove surface from ArrayMesh since `surface_remove` were removed in 4.x
+	#  		Engine's github issue: https://github.com/godotengine/godot/issues/67181
+
+	var ignored_textures = VMFConfig.materials.ignore;
+	var duplicated_mesh = ArrayMesh.new();
+	var transformer = VMFTransformer.new();
+	var extend_transformer = Engine.get_main_loop().root.get_node_or_null("VMFExtendTransformer");
+
+	var mt = MeshDataTool.new();
+
+	for surface_idx in original_mesh.get_surface_count():
+		var material_name = original_mesh.get_meta("surface_material_" + str(surface_idx), "").to_lower();
+		var material = original_mesh.surface_get_material(surface_idx);
+		var compilekeys = material.get_meta("compile_keys", []) if material else [];
+
+		var is_ignored = ignored_textures.any(func(rx: String) -> bool: return material_name.match(rx.to_lower()));
+		if is_ignored: continue;
+		var is_norender = false;
+
+		for key in compilekeys:
+			var transformer_key = "norender_" + key;
+
+			if extend_transformer and transformer_key in extend_transformer:
+				is_norender = extend_transformer[transformer_key];
+
+			if is_norender: break;
+
+			if transformer_key in transformer:
+				is_norender = transformer[transformer_key];
+
+			if is_norender: break;
+
+		if is_norender: continue;
+
+		mt.create_from_surface(original_mesh, surface_idx);
+		mt.commit_to_surface(duplicated_mesh, surface_idx);
+
+	return duplicated_mesh;
+
+# In case if SteamAudio plugin detected in the project it will create SteamAudioGeometry for each surface
+static func create_steam_audio_geometry(surface_prop: String, collision_shape: CollisionShape3D):
+	if not type_exists("SteamAudioGeometry"): return;
+
+	var path = (VMFConfig.config.import.steamAudioMaterialsFolder + "/" + surface_prop + ".tres") \
+		.replace("\\", "/") \
+		.replace("//", "/") \
+		.replace("res:/", "res://");
+
+	var is_audio_material_exists = ResourceLoader.exists(path);
+	if not is_audio_material_exists: return;
+
+	var material = ResourceLoader.load(path);
+
+	var steam_audio_geometry = ClassDB.instantiate("SteamAudioGeometry");
+	steam_audio_geometry.name = "sag_" + surface_prop;
+	steam_audio_geometry.material = material;
+
+	collision_shape.add_child(steam_audio_geometry);
+	steam_audio_geometry.set_owner(collision_shape.get_owner());
+
 ## Returns MeshInstance3D from parsed VMF structure
 static func create_mesh(vmf_structure: Dictionary, _offset: Vector3 = Vector3(0, 0, 0)) -> ArrayMesh:
 	clear_caches();
 
-	var _scale: float = VMFConfig.config.import.scale;
-	var _default_texture_size: float = VMFConfig.config.material.defaultTextureSize;
-	var _ignore_textures: Array[String];
-	_ignore_textures.assign(VMFConfig.config.material.ignore);
-	var _texture_import_mode: int = VMFConfig.config.material.importMode;
-
-	var elapsed_time := Time.get_ticks_msec();
+	var _scale: float = VMFConfig.import.scale;
+	var t := Time.get_ticks_msec();
 
 	if not "solid" in vmf_structure.world:
 		return null;
 
 	var brushes = vmf_structure.world.solid;
 	var material_sides = {};
-	var texture_cache = {};
 	var mesh := ArrayMesh.new();
 
 	for brush in brushes:
 		for side in brush.side:
 			var material: String = side.material.to_upper();
-			var isIgnored = _ignore_textures.any(func(rx: String) -> bool: return material.match(rx));
-
-			if isIgnored:
-				continue;
 
 			if not material in material_sides:
 				material_sides[material] = [];
@@ -244,6 +372,8 @@ static func create_mesh(vmf_structure: Dictionary, _offset: Vector3 = Vector3(0,
 			if vertices.size() < 3:
 				VMFLogger.error("Side corrupted: " + str(side.id));
 				continue;
+
+			if not side.plane: continue;
 
 			if not is_displacement:
 				var normal = side.plane.value.normal;
@@ -308,23 +438,17 @@ static func create_mesh(vmf_structure: Dictionary, _offset: Vector3 = Vector3(0,
 						sf.add_index(base_index + x + 1 + (y + 1) * verts_count);
 						sf.add_index(base_index + x + 1 + y * verts_count);
 
-		var ignore_materials: bool = VTFTool.TextureImportMode.DO_NOTHING == VMFConfig.config.material.importMode;
-
-		if not ignore_materials:
-			var material = VTFTool.get_material(sides[0].side.material);
-
-			if material:
-				sf.set_material(material);
+		var material = get_material(sides[0].side.material);
+		if material: sf.set_material(material);
 				
 		sf.optimize_indices_for_cache();
 		sf.generate_normals();
-		sf.generate_tangents();
 		sf.commit(mesh);
 
-	elapsed_time = Time.get_ticks_msec() - elapsed_time;
+		mesh.set_meta("surface_material_" + str(mesh.get_surface_count() - 1), sides[0].side.material);
 
-	if elapsed_time > 100:
-		if "source" in vmf_structure: VMFLogger.warn(vmf_structure.source);
-		VMFLogger.warn("Mesh generation took " + str(elapsed_time) + "ms");
+	t = Time.get_ticks_msec() - t;
+	if t > 100:
+		VMFLogger.warn("Mesh generation took " + str(t) + "ms");
 
 	return mesh;
