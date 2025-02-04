@@ -56,7 +56,7 @@ func _apply_entity(ent):
 	if color is Vector3:
 		light.set_color(Color(color.x, color.y, color.z));
 		light.light_energy = 1.0;
-	elif "r" in color:
+	elif color is Color:
 		light.set_color(Color(color.r, color.g, color.b));
 		light.light_energy = color.a;
 	else:

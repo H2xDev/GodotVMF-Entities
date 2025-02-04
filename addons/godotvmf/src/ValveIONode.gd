@@ -3,6 +3,7 @@ class_name ValveIONode extends Node3D;
 
 static var named_entities = {};
 
+## Assigns global targetname for the node
 static func define_alias(name: String, value: Node):
 	if name == '!self' or name in aliases:
 		VMFLogger.error('The alias "' + name + '" is already defined');
@@ -15,8 +16,7 @@ static func define_alias(name: String, value: Node):
 @export var flags: int = 0;
 
 var config:
-	get:
-		return VMFConfig.config;
+	get: return VMFConfig;
 
 static var aliases: Dictionary = {};
 
@@ -48,17 +48,26 @@ func _reparent():
 	if parentNode: reparent(parentNode, true);
 
 func _ready():
+	var ename = entity.get("targetname", "");
+	if ename: add_to_group(entity.targetname);
+
 	if is_runtime:
 		_apply_entity(entity);
+	else:
+		set_process(false);
+		set_physics_process(false);
 
 	if Engine.is_editor_hint():
 		return;
 
-	parse_connections();
-
-	ValveIONode.named_entities[name] = self;
+	if ename: add_named_entity(ename, self);
 
 	enabled = entity.get("StartDisabled", 0) == 0;
+
+	parse_connections(self);
+
+	set_process(true);
+	set_physics_process(true);
 
 	call_deferred("_reparent");
 	call_deferred("_entity_ready");
@@ -66,102 +75,78 @@ func _ready():
 func _apply_entity(ent) -> void:
 	self.entity = ent;
 	self.flags = ent.get("spawnflags", 0);
-	self.basis = get_entity_basis(ent);
-	self.position = ent.get("origin", Vector3.ZERO);
+	self.transform = get_entity_transform(ent);
 
 	assign_name();
 
-func assign_name(i = 0) -> void:
+func assign_name() -> void:
 	self.name = str(entity.get("id", "no_name"));
 
 	if not "targetname" in entity:
 		self.name = entity.classname + '_' + str(entity.get("id", "no-id"));
 		return;
 
-	if not get_parent().get_node_or_null(entity.targetname):
-		self.name = entity.targetname;
-	else: if not get_parent().get_node_or_null(entity.targetname + str(i)):
-		self.name = entity.targetname + str(i);
-	else:
-		return assign_name(i + 1);
+	self.name = entity.targetname + '_' + str(entity.get("id", "no-id"));
 
-func call_target_input(target, input, param, delay) -> void:
-	if not enabled:
+static func add_named_entity(name: String, node: Node):
+	node.add_to_group(name);
+	if not name in ValveIONode.named_entities:
+		ValveIONode.named_entities[name] = [];
+
+	ValveIONode.named_entities[name].append(node);
+
+static func call_target_input(target, input, param, delay, caller) -> void:
+	if "enabled" in caller and not caller.enabled:
 		return;
 
-	var targetNode: Node = null;
-
-	if target in aliases:
-		targetNode = aliases[target];
-
-	if target == '!self':
-		targetNode = self;
-
-	if targetNode == null:
-			targetNode = get_target(target);
-
-	if not targetNode:
-		return;
-
-	if not input in targetNode:
-		return;
-
-	var targets: Array[Node3D] = [];
-	if not target.begins_with("!"):
-		targets = get_all_targets(targetNode.name);
-	else:
-		targets = [targetNode];
+	var targets = get_all_targets(target, caller) \
+			if not target.begins_with("!") \
+			else [get_target(target, caller)];
 
 	for node in targets:
+		if not is_instance_valid(node): continue;
+		if input not in node: continue;
+
 		if delay > 0.0:
-			get_tree().create_timer(delay).timeout.connect(func():
-				activator = self;
+			caller.get_tree().create_timer(delay).timeout.connect(func():
+				node.set("activator", caller);
 				node.call(input, param)
 			);
 		else:
-			activator = self;
+			node.set("activator", caller);
 			node.call(input, param);
 
-func get_target(n) -> Node3D:
+static func get_target(n, caller = null) -> Node3D:
 	if n in ValveIONode.aliases:
 		return ValveIONode.aliases[n];
 
-	if not n in ValveIONode.named_entities:
-		return get_parent().get_node_or_null(NodePath(n));
+	var nodes = get_all_targets(n, caller);
+	var node = nodes[0] if nodes.size() > 0 else null;
 
-	if n in ValveIONode.named_entities:
-		if not is_instance_valid(ValveIONode.named_entities[n]):
-			ValveIONode.named_entities.erase(n);
-			return null;
-		return ValveIONode.named_entities[n];
+	if node == null: return null;
+	if not is_instance_valid(node):
+		ValveIONode.named_entities[n].erase(node);
+		return get_target(n, caller);
 
+	return node;
 
-	return null;
+static func get_all_targets(target_name: String, caller = null) -> Array:
+	if VMFConfig.get_tree().has_group(target_name):
+		return VMFConfig.get_tree().get_nodes_in_group(target_name);
 
-func get_all_targets(targetName: String, i: int = -1, targets: Array[Node3D] = []) -> Array[Node3D]:
-	var cname := targetName + str(i) if i > -1 else targetName;
-	var node := get_target(cname);
+	return ValveIONode.named_entities.get(target_name, []);
 
-	if not node:
-		return targets;
+static func parse_connections(caller: Node) -> void:
+	if "validate_entity" in caller and not caller.validate_entity(): return;
+	if not "entity" in caller or not "connections" in caller.entity: return;
 
-	targets.append(node);
-	return get_all_targets(targetName, i + 1, targets);
-
-func parse_connections() -> void:
-	if not validate_entity(): return;
-
-	if not "connections" in entity:
-		return;
-
-	var outputs = entity.connections.keys();
+	var outputs = caller.entity.connections.keys();
 
 	for output in outputs:
-		var connections = entity.connections[output];
-
+		var connections = caller.entity.connections[output];
 		connections = connections if connections is Array else [connections];
 
-		add_user_signal(output);
+		caller.add_user_signal(output);
 
 		for connectionData in connections:
 			var arr = connectionData.split(",");
@@ -171,8 +156,17 @@ func parse_connections() -> void:
 			var delay = float(arr[3]);
 			var times = arr[4];
 
-			self.connect(output, func():
-				call_target_input(target, input, param, delay));
+			caller.connect(output, func(): call_target_input(target, input, param, delay, caller));
+
+## Returns the VMFNode where the entity placed
+func get_vmfnode():
+	var p = get_parent();
+
+	while p:
+		if p is VMFNode: return p;
+		p = p.get_parent();
+
+	return null;
 
 func validate_entity() -> bool:
 	if entity.keys().size() == 0:
@@ -192,39 +186,42 @@ func has_flag(flag: int) -> bool:
 	return (entity.spawnflags & flag) != 0;
 
 func trigger_output(output) -> void:
-	if not enabled:
-		return;
+	if not enabled: return;
 
 	if has_signal(output):
 		emit_signal(output);
 
-func get_mesh() -> ArrayMesh:
-	if not validate_entity():
-		return;
+func get_mesh(cleanup = true) -> ArrayMesh:
+	if not validate_entity(): return;
 
 	var solids = entity.solid if entity.solid is Array else [entity.solid];
 
 	var struct := {
 		'source': entity.classname + '_' + str(entity.id),
-		'world': {
-			'solid': solids,
-		},
+		'world': { 'solid': solids },
 	};
-	var offset: Vector3 = entity.origin if "origin" in entity else Vector3.ZERO;
 	
-	return VMFTool.create_mesh(struct, offset);
+	return VMFTool.cleanup_mesh(VMFTool.create_mesh(struct, global_position)) \
+			if cleanup \
+			else VMFTool.create_mesh(struct, global_position);
 
 static func convert_vector(v) -> Vector3:
 	return Vector3(v.x, v.z, -v.y);
 
 static func convert_direction(v) -> Vector3:
 	return get_entity_basis({ "angles": v }).get_euler();
-	
-static func get_entity_basis(ent) -> Basis:
+
+static func get_entity_transform(ent):
 	var angles = ent.get("angles", Vector3.ZERO) / 180 * PI;
 	angles = Vector3(angles.z, angles.y, -angles.x);
 	
-	return Basis.from_euler(angles, 3);
+	var basis = Basis.from_euler(angles, 3);
+	var pos = ent.get("origin", Vector3.ZERO) * VMFConfig.import.scale;
+	pos = Vector3(pos.x, pos.z, -pos.y);
+	return Transform3D(basis, pos);
+	
+static func get_entity_basis(ent) -> Basis:
+	return get_entity_transform(ent).basis;
 
 static func get_movement_vector(v):
 	var _basis = Basis.from_euler(Vector3(v.x, -v.y, -v.z) / 180.0 * PI);
@@ -249,17 +246,13 @@ func get_entity_convex_shape():
 		return;
 
 	var solids = entity.solid if entity.solid is Array else [entity.solid];
-
 	var struct := {
 		'world': {
 			'solid': solids,
 		},
 	};
 
-	var origin = entity.origin if "origin" in entity else Vector3.ZERO;
-
-	var mesh := VMFTool.create_mesh(struct, origin);
-
+	var mesh = VMFTool.create_mesh(struct, global_position);
 	return mesh.create_convex_shape();
 	
 ## Creates optimised trimesh shape of the entity by using CSGCombiner3D
@@ -272,17 +265,10 @@ func get_entity_trimesh_shape():
 	var combiner = CSGCombiner3D.new();
 
 	for solid in solids:
-		var struct = {
-			'world': {
-				'solid': [solid],
-			},
-		};
-	
+		var struct = { 'world': { 'solid': [solid] } };
 		var csgmesh = CSGMesh3D.new();
-		var origin = entity.get("origin", Vector3.ZERO);
 
-		csgmesh.mesh = VMFTool.create_mesh(struct, origin);
-
+		csgmesh.mesh = VMFTool.create_mesh(struct, global_position);
 		combiner.add_child(csgmesh);
 		
 	combiner._update_shape();
@@ -291,3 +277,16 @@ func get_entity_trimesh_shape():
 	combiner.queue_free();
 	
 	return shape;
+
+func get_separated_collisions() -> Array[CollisionShape3D]:
+	var collisions: Array[CollisionShape3D] = [];
+
+	var solids = entity.solid if entity.solid is Array else [entity.solid];
+	for solid in solids:
+		var struct = { 'world': { 'solid': [solid] } };
+		var mesh = VMFTool.create_mesh(struct, global_position);
+		var collision_shape = CollisionShape3D.new();
+		collision_shape.shape = mesh.create_convex_shape(true);
+		collisions.append(collision_shape);
+
+	return collisions;

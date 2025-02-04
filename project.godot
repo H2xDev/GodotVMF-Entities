@@ -11,13 +11,14 @@ config_version=5
 [application]
 
 config/name="GodotVMF-Project-Template"
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/features=PackedStringArray("4.4", "Forward Plus")
 boot_splash/image="res://build_presets/splash.png"
 config/icon="res://icon.svg"
 
 [autoload]
 
 SoundManager="*res://scripts/sound_manager.gd"
+VMFConfig="*res://addons/godotvmf/src/VMFConfig.gd"
 
 [display]
 
