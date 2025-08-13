@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqh85dj2mdhn7"]
+
+[ext_resource type="Script" path="res://entities/logic_relay.gd" id="1_ggw53"]
+
+[node name="LogicRelay" type="Node3D"]
+script = ExtResource("1_ggw53")

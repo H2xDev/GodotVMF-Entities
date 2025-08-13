@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxvre6issxp4l"]
+
+[ext_resource type="Script" path="res://entities/func_rotating.gd" id="1_m0mnr"]
+
+[node name="FuncRotating" type="Node3D"]
+script = ExtResource("1_m0mnr")
+
+[node name="body" type="RigidBody3D" parent="."]
+freeze = true
+freeze_mode = 1
+
+[node name="mesh" type="MeshInstance3D" parent="body"]
+skeleton = NodePath("../..")
+
+[node name="collision" type="CollisionShape3D" parent="body"]

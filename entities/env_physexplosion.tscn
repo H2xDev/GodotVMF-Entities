@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dw8lwrl725ac1"]
+
+[ext_resource type="Script" uid="uid://dlmsdedxysjky" path="res://entities/env_physexplosion.gd" id="1_bb2ax"]
+
+[node name="env_physexplostion" type="Node3D"]
+script = ExtResource("1_bb2ax")

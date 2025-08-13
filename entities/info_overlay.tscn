@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://cjy41gyowie1n"]
+
+[ext_resource type="Script" uid="uid://d3hjictjpc6km" path="res://entities/info_overlay.gd" id="1_ahhqv"]
+
+[node name="InfoOverlay" type="Node3D"]
+script = ExtResource("1_ahhqv")
+
+[node name="decal" type="Decal" parent="."]
+size = Vector3(2, 0.1, 2)
+distance_fade_enabled = true
+distance_fade_begin = 8.0
+distance_fade_length = 5.0

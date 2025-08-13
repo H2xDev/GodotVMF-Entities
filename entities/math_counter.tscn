@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c446bnusmbopl"]
+
+[ext_resource type="Script" path="res://entities/math_counter.gd" id="1_d3et4"]
+
+[node name="MathCounter" type="Node3D"]
+script = ExtResource("1_d3et4")

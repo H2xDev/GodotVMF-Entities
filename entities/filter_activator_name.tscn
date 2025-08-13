@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://6ula86o1fnem"]
+
+[ext_resource type="Script" path="res://entities/filter_activator_name.gd" id="1_jv0pp"]
+
+[node name="FilterActivatorName" type="Node3D"]
+script = ExtResource("1_jv0pp")

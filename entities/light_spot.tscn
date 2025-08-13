@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqohp4r0iukoo"]
+
+[ext_resource type="Script" uid="uid://b2ig1dqkas2d6" path="res://entities/light_spot.gd" id="1_t5d4s"]
+
+[node name="LightSpot" type="Node3D"]
+rotation_order = 3
+script = ExtResource("1_t5d4s")
+
+[node name="light" type="SpotLight3D" parent="."]
+light_energy = 0.0
+light_volumetric_fog_energy = 2.0
+shadow_enabled = true
+shadow_reverse_cull_face = true
+distance_fade_enabled = true
+distance_fade_begin = 20.0
+distance_fade_shadow = 30.0
+spot_range = 100.0
