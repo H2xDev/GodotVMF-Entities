@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgf0xr1ow3qb5"]
+
+[ext_resource type="Script" uid="uid://dq4uwvevph7cx" path="res://entities/func_occluder.gd" id="1_q8f4w"]
+
+[node name="FuncOccluder" type="Node3D"]
+script = ExtResource("1_q8f4w")
+
+[node name="occluder" type="OccluderInstance3D" parent="."]
