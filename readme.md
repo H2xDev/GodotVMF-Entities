@@ -33,11 +33,6 @@ This library provides pre-implemented Source Engine entities that seamlessly int
 - **func_physbox** - Physical boxes with collision
 - **func_rotating** - Rotating brushes
 
-### 💡 Lighting
-- **light** - Basic point light
-- **light_environment** - Global lighting and sky
-- **light_spot** - Spotlight with direction
-
 ### 🔧 Logic
 - **logic_relay** - Logic relay for I/O system
 - **math_counter** - Counter with mathematical operations
