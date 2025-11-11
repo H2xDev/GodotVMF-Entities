@@ -1,5 +1,5 @@
 @tool
-class_name v_light extends ValveIONode
+class_name v_light extends VMFEntityNode
 
 enum Appearance {
 	NORMAL,
@@ -77,25 +77,23 @@ func animate_light(delta: float) -> void:
 func _process(_delta: float) -> void:
 	animate_light(_delta);
 
-func _apply_entity(ent: Dictionary) -> void:
-	super._apply_entity(ent);
+func _entity_setup(ent: VMFEntity) -> void:
+	var color: Color = ent.data._light;
+	var color_vec3: Vector3 = ent.data._light if ent.data._light is Vector3 else Vector3.ZERO;
 
-	var color: Color = ent._light;
-	var color_vec3: Vector3 = ent._light if ent._light is Vector3 else Vector3.ZERO;
-
-	if ent.get("targetname", null) or ent.get("parentname", null):
+	if ent.data.get("targetname", null) or ent.data.get("parentname", null):
 		light.light_bake_mode = Light3D.BAKE_DYNAMIC;
 	else:
 		light.light_bake_mode = Light3D.BAKE_STATIC;
 
-	if ent._light is Vector3:
+	if ent.data._light is Vector3:
 		light.set_color(Color(color_vec3.x, color_vec3.y, color_vec3.z));
 		light.light_energy = 1.0;
 	elif color is Color:
 		light.set_color(Color(color.r, color.g, color.b));
 		light.light_energy = color.a;
 	else:
-		VMFLogger.error('Invalid light: ' + str(ent.id));
+		VMFLogger.error('Invalid light: ' + str(ent.data.id));
 		get_parent().remove_child(self);
 		queue_free();
 		return;
@@ -107,8 +105,8 @@ func _apply_entity(ent: Dictionary) -> void:
 		var radius := (1 / config.import.scale) * sqrt(light.light_energy);
 		var attenuation := 1.44;
 
-		var fifty_percent_distance: float = ent.get("_fifty_percent_distance", 0.0);
-		var zero_percent_distance: float = ent.get("_zero_percent_distance", 0.0);
+		var fifty_percent_distance: float = ent.data.get("_fifty_percent_distance", 0.0);
+		var zero_percent_distance: float = ent.data.get("_zero_percent_distance", 0.0);
 
 		if fifty_percent_distance > 0.0 or zero_percent_distance> 0.0:
 			var dist50: float = min(fifty_percent_distance , zero_percent_distance) * config.import.scale;
@@ -123,7 +121,7 @@ func _apply_entity(ent: Dictionary) -> void:
 
 	light.shadow_enabled = true;
 	default_light_energy = light.light_energy;
-	style = ent.style if "style" in ent else Appearance.NORMAL;
+	style = ent.data.style if "style" in ent else Appearance.NORMAL;
 
 func TurnOff(_param: Variant) -> void:
 	light.visible = false;

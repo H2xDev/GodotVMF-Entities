@@ -1,6 +1,5 @@
 @tool
-class_name filter_multi
-extends filter_entity
+class_name filter_multi extends filter_entity
 
 const FILTERS_FIELDS = [
 	"Filter01",

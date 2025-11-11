@@ -1,5 +1,5 @@
 @tool
-class_name env_physexplostion extends ValveIONode
+class_name env_physexplostion extends VMFEntityNode
 
 var magnitude: float:
 	get: return entity.get("magnitude", 100.0) * config.import.scale;

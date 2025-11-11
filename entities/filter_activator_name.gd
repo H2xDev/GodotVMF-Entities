@@ -1,6 +1,5 @@
 @tool
-class_name filter_activator_name
-extends filter_entity
+class_name filter_activator_name extends filter_entity
 
 func is_passed(node: Node3D) -> bool:
 	var is_inverted = str(entity.get("Negated", 0)) == "1";

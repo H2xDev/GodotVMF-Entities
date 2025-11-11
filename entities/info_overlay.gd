@@ -1,5 +1,5 @@
 @tool
-extends ValveIONode
+class_name info_overlay extends VMFEntityNode
 
 var uv_0: Vector3:
 	get: return entity.get("uv0") as Vector3;
@@ -13,10 +13,8 @@ var uv_2: Vector3:
 var uv_3: Vector3:
 	get: return entity.get("uv3") as Vector3;
 
-func _apply_entity(e):
-	super._apply_entity(e);
-
-	var material = VMTLoader.get_material(e.material);
+func _apply_entity(e: VMFEntity) -> void:
+	var material = VMTLoader.get_material(e.data.material);
 
 	if not material:
 		queue_free();

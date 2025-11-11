@@ -1,6 +1,5 @@
 @tool
-class_name trigger_once
-extends ValveIONode
+class_name trigger_once extends ValveIONode
 
 func _entity_ready():
 	# NOTE: Call deffered is used to prevent unexpected trigger after player spawn
@@ -12,7 +11,5 @@ func _entity_ready():
 			queue_free();
 	);
 
-func _apply_entity(e):
-	super._apply_entity(e);
-	
+func _entity_setup(e):
 	$area/collision.shape = get_entity_shape();

@@ -1,9 +1,7 @@
 @tool
-class_name func_detail extends ValveIONode
+class_name func_detail extends VMFEntityNode
 
-func _apply_entity(entity_data: Dictionary) -> void:
-	super._apply_entity(entity_data);
-	
+func _apply_entity(entity_data: VMFEntity) -> void:
 	var mesh = get_mesh();
 	$mesh.cast_shadow = entity_data.get("disableshadows", 0) == 0;
 

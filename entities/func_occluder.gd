@@ -1,15 +1,13 @@
 ## This entity will merge all func_occluder instances into one during import
 
 @tool
-class_name func_occluder extends ValveIONode
+class_name func_occluder extends VMFEntityNode
 
 var occluder_instance: OccluderInstance3D:
 	get: return get_node("occluder") as OccluderInstance3D;
 
 ## Entity setup method. Called during the map import process. Do additional setup for the entity here.
-func _apply_entity(_entity: Dictionary) -> void:
-	super._apply_entity(_entity);
-
+func _entity_setup(_entity: VMFEntity) -> void:
 	var existing_occluder := get_parent().get_node_or_null("occluder") as func_occluder;
 	name = "occluder";
 

@@ -1,5 +1,5 @@
 @tool
-class_name filter_entity extends ValveIONode
+class_name filter_entity extends VMFEntityNode
 
 func get_entity(node):
 	if node is ValveIONode: return node;

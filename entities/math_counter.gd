@@ -1,6 +1,5 @@
 @tool
-class_name math_counter
-extends ValveIONode
+class_name math_counter extends VMFEntityNode
 
 var value = 0;
 

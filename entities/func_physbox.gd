@@ -1,5 +1,5 @@
 @tool
-extends ValveIONode
+class_name func_physbox extends VMFEntityNode
 
 var FLAG_IGNORE_PICKUP = 8192;
 var FLAG_MOTION_DISABLED = 32768;
@@ -15,9 +15,7 @@ func EnableMotion(_param):
 func DisableMotion(_param):
 	$body.freeze = true;
 
-func _apply_entity(e):
-	super._apply_entity(e);
-	
+func _entity_setup(e):
 	$body.freeze = has_flag(FLAG_MOTION_DISABLED);
 	$body/mesh.set_mesh(get_mesh());
 	$body/collision.shape = $body/mesh.mesh.create_convex_shape(true);

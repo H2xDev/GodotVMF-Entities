@@ -1,5 +1,5 @@
 @tool
-extends ValveIONode
+class_name func_rotating extends VMFEntityNode
 
 @export var preview = false;
 
@@ -13,9 +13,7 @@ var current_tween = null;
 var loop_sound = null;
 var current_player = null;
 
-func _apply_entity(e):
-	super._apply_entity(e);
-
+func _entity_setup(e: VMFEntity):
 	$body/mesh.set_mesh(get_mesh());
 	$body/mesh.cast_shadow = entity.disableshadows == 0;
 	$body/mesh.gi_mode = GeometryInstance3D.GI_MODE_DYNAMIC;

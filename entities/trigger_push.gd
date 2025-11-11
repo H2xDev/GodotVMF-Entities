@@ -1,5 +1,5 @@
 @tool
-class_name TriggerPush extends trigger_multiple;
+class_name trigger_push extends trigger_multiple
 
 var bodies = [];
 

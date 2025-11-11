@@ -1,5 +1,5 @@
 @tool
-class_name light_environment extends ValveIONode
+class_name light_environment extends VMFEntityNode
 
 func _apply_entity(e: Dictionary) -> void:
 	super._apply_entity(e);

@@ -1,8 +1,9 @@
 @tool
 class_name v_light_spot extends v_light
 
-func _apply_entity(e: Dictionary) -> void:
-	super._apply_entity(e);
+func _entity_setup(e: Dictionary) -> void:
+	super._entity_setup(e);
+
 	var spot_light := light as SpotLight3D;
 
 	spot_light.spot_angle = e._cone;

@@ -1,6 +1,6 @@
 @tool
 class_name trigger_multiple
-extends ValveIONode
+extends VMFEntityNode
 
 const FLAG_CLIENTS = 1;
 
@@ -32,7 +32,5 @@ func _entity_ready():
 			trigger_output("OnEndTouch");
 	);
 
-func _apply_entity(e):
-	super._apply_entity(e);
-	
+func _entity_setup(e: VMFEntity):
 	$area/collision.shape = get_entity_shape();

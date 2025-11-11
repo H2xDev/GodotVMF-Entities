@@ -1,27 +1,79 @@
-# GodotVMF entities library
+# 🎮 GodotVMF Entities Library
 
-A library of entities that you can use in your Godot projects with a plugin [GodotVMF](https://github.com/H2xDev/GodotVMF).  
-If you found an issue feel free to create a [ticket](https://github.com/H2xDev/GodotVMF-Entities/issues)
+> A comprehensive library of Source Engine entities for Godot projects using [GodotVMF](https://github.com/H2xDev/GodotVMF) v2.2+
 
-## Installation
-Put the `entities` folder into you project root folder.
+[![License](https://img.shields.io/github/license/H2xDev/GodotVMF-Entities)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/H2xDev/GodotVMF-Entities)](https://github.com/H2xDev/GodotVMF-Entities/issues)
 
-## List of entities
-- env_physexplosion
-- filter_activator_name
-- filter_multi
-- func_physbox
-- func_rotating
-- info_overlay
-- light
-- light_environment
-- light_spot
-- logic_relay
-- math_counter
-- trigger_once
-- trigger_multiple
-- trigger_push
+---
 
-## Contribution
-If you have implemented entities from the default FGD from games feel free to create a pull request.
+## 📖 Overview
 
+This library provides pre-implemented Source Engine entities that seamlessly integrate with your Godot projects through the GodotVMF plugin. Import VMF maps with full entity support out of the box!
+
+**Found a bug?** Feel free to [open an issue](https://github.com/H2xDev/GodotVMF-Entities/issues) 🐛
+
+## 📦 Installation
+
+1. Download or clone this repository
+2. Copy the `entities` folder into your Godot project's root directory
+3. Ensure [GodotVMF](https://github.com/H2xDev/GodotVMF) v2.2+ is installed
+4. Start using entities in your VMF maps!
+
+## 📋 Supported Entities
+
+### 🌍 Environment
+- **env_physexplosion** - Physical explosion effects
+
+### 🔍 Filters
+- **filter_activator_name** - Filter entities by name
+- **filter_multi** - Multiple filter logic
+
+### 🎯 Func Entities
+- **func_physbox** - Physical boxes with collision
+- **func_rotating** - Rotating brushes
+
+### 💡 Lighting
+- **light** - Basic point light
+- **light_environment** - Global lighting and sky
+- **light_spot** - Spotlight with direction
+
+### 🔧 Logic
+- **logic_relay** - Logic relay for I/O system
+- **math_counter** - Counter with mathematical operations
+
+### 🚪 Triggers
+- **trigger_once** - Single-use trigger
+- **trigger_multiple** - Reusable trigger
+- **trigger_push** - Push entities in a direction
+
+### ℹ️ Info
+- **info_overlay** - Texture overlays
+
+## 🤝 Contributing
+
+We welcome contributions! If you've implemented entities from the default FGD files:
+
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feature/new-entity`)
+3. Commit your changes (`git commit -m 'Add new entity'`)
+4. Push to the branch (`git push origin feature/new-entity`)
+5. Open a Pull Request
+
+All contributions should follow the existing code style and include proper documentation.
+
+---
+
+## 📄 License
+
+See [LICENSE](LICENSE) file for details.
+
+## 🔗 Related Projects
+
+- [GodotVMF](https://github.com/H2xDev/GodotVMF) - The main VMF importer plugin for Godot
+
+---
+
+<div align="center">
+Made with ❤️ for the Godot and Source Engine community!
+</div>
