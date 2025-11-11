@@ -1,35 +1,48 @@
 @tool
 class_name func_rotating extends VMFEntityNode
 
-@export var preview = false;
-
 const FLAG_START_ON: int = 1;
 const FLAG_REVERSE_DIRECTION: int = 2;
 const FLAG_X_AXIS: int = 4;
 const FLAG_Y_AXIS: int = 8;
 const FLAG_NONSOLID: int = 64;
 
-var current_tween = null;
-var loop_sound = null;
-var current_player = null;
+var current_tween: Tween;
+@onready var loop_player: AudioStreamPlayer3D = $body/loop_player;
 
-func _entity_setup(e: VMFEntity):
-	$body/mesh.set_mesh(get_mesh());
-	$body/mesh.cast_shadow = entity.disableshadows == 0;
-	$body/mesh.gi_mode = GeometryInstance3D.GI_MODE_DYNAMIC;
+var max_speed: float:
+	get: return entity.get("maxspeed", 0.0);
+
+var sound_path: String:
+	get: return entity.get("message", "");
+
+func _entity_setup(_e: VMFEntity) -> void:
+	var mesh: MeshInstance3D = $body/mesh;
+	var collision: CollisionShape3D = $body/collision;
+
+	mesh.set_mesh(get_mesh());
+	mesh.cast_shadow = entity.disableshadows == 0;
+	mesh.gi_mode = GeometryInstance3D.GI_MODE_DYNAMIC;
+	assign_sound();
 
 	if has_flag(FLAG_NONSOLID):
-		$body/collision.queue_free();
+		collision.queue_free();
 	else:
-		$body/collision.shape = get_entity_shape();
+		collision.shape = get_entity_shape();
 
-func _physics_process(dt):
-	if Engine.is_editor_hint() && not preview:
+func assign_sound() -> void:
+	var resource_path := VMFUtils.normalize_path("res://sound/%s" % sound_path);
+
+	if not ResourceLoader.exists(resource_path): 
+		VMFLogger.warn("func_rotating: Sound doesnt exists %s" % resource_path);
 		return;
 
+	loop_player.stream = load(resource_path);
+
+func _physics_process(dt: float) -> void:
 	if not enabled: return;
 
-	var speed = entity.maxspeed * dt;
+	var speed := max_speed * dt;
 
 	if has_flag(FLAG_REVERSE_DIRECTION):
 		speed *= -1;
@@ -41,34 +54,27 @@ func _physics_process(dt):
 	else:
 		rotation_degrees.y += speed;
 
-func _entity_ready():
+func _entity_ready() -> void:
 	enabled = has_flag(FLAG_START_ON);
-	loop_sound = SoundManager.precache_sound(entity.get("message", ""));
 
 # INPUTS
 
-func Start(_param = null):
+func Start(_param: Variant = null) -> void:
 	enabled = true;
+	loop_player.play();
 
-	if loop_sound:
-		current_player = SoundManager.play_sound(global_position, loop_sound);
-
-func Stop(_param = null):
+func Stop(_param: Variant = null) -> void:
 	enabled = false;
+	loop_player.stop()
 
-	if current_player:
-		current_player.stop()
-		current_player.queue_free();
-		current_player = null;
-
-func RotateBy(deg):
+func RotateBy(deg: float) -> void:
 	if current_tween:
 		return;
 
 	deg = float(deg);
 
 	current_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN);
-	var target = Vector3.ZERO;
+	var target := Vector3.ZERO;
 
 	if has_flag(FLAG_X_AXIS):
 		target.x = deg;
@@ -77,7 +83,7 @@ func RotateBy(deg):
 	else:
 		target.y = deg;
 	
-	var end_rot = rotation_degrees + target;
+	var end_rot := rotation_degrees + target;
 
 	current_tween.tween_property(self, "rotation_degrees", end_rot, 2.0);
 	current_tween.play();

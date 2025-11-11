@@ -1,7 +1,7 @@
 @tool
-class_name trigger_once extends ValveIONode
+class_name trigger_once extends VMFEntityNode
 
-func _entity_ready():
+func _entity_ready() -> void:
 	# NOTE: Call deffered is used to prevent unexpected trigger after player spawn
 	$area.body_entered.connect.call_deferred(func(_node):
 		if not enabled: return;
