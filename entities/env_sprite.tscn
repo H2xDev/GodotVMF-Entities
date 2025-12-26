@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://douwf8qmccjyk"]
+
+[ext_resource type="Script" uid="uid://dtmnlc24kyfux" path="res://entities/env_sprite.gd" id="1_daalt"]
+
+[node name="EnvSprite" type="Node3D"]
+script = ExtResource("1_daalt")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
