@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnmis01263nf0"]
+
+[ext_resource type="Script" uid="uid://c823mfvk7vfcy" path="res://entities/info_teleport_destination.gd" id="1_vafkw"]
+
+[node name="InfoTeleportDestination" type="Node3D"]
+script = ExtResource("1_vafkw")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
