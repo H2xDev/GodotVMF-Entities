@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7esp18mrh5ex"]
+
+[ext_resource type="Script" uid="uid://xskps3d2k6vb" path="res://entities/trigger_teleport.gd" id="1_xq58s"]
+
+[node name="TriggerTeleport" type="Node3D"]
+script = ExtResource("1_xq58s")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
+
+[node name="area" type="Area3D" parent="."]
+collision_mask = 6
+
+[node name="collision" type="CollisionShape3D" parent="area"]
