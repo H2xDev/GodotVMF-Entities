@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://d4m2fhp5u65u6"]
+
+[ext_resource type="Script" uid="uid://dn5n3ev5pq7mi" path="res://entities/logic_branch.gd" id="1_0pfn0"]
+
+[node name="LogicBranch" type="Node3D"]
+script = ExtResource("1_0pfn0")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
