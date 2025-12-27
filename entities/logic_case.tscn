@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c48ek8urj2w4s"]
+
+[ext_resource type="Script" uid="uid://d3o1j2c6ji02w" path="res://entities/logic_case.gd" id="1_xugru"]
+
+[node name="LogicCase" type="Node3D"]
+script = ExtResource("1_xugru")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
