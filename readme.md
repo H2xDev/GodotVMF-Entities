@@ -25,7 +25,7 @@ This library provides pre-implemented Source Engine entities that seamlessly int
 ### 🌍 Environment
 - **env_physexplosion** - Physical explosion effects
 - **env_sprite** - Sprite3D
-- **env_entity_maker** - spawns godot scenes (put the name of godot scene in targetname Point_template To Spawn) (default scene folder path is set to res://Scenes)
+- **env_entity_maker** - spawns godot scenes (put the name of godot scene in Point_template To Spawn) (default scene folder path is set to res://Scenes)
 
 ### 🔍 Filters
 - **filter_activator_name** - Filter entities by name
