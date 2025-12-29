@@ -24,6 +24,8 @@ This library provides pre-implemented Source Engine entities that seamlessly int
 
 ### 🌍 Environment
 - **env_physexplosion** - Physical explosion effects
+- **env_sprite** - Sprite3D
+- **env_entity_maker** - spawns godot scenes (put the name of godot scene in targetname Point_template To Spawn) (default scene folder path is set to res://Scenes)
 
 ### 🔍 Filters
 - **filter_activator_name** - Filter entities by name
@@ -35,15 +37,19 @@ This library provides pre-implemented Source Engine entities that seamlessly int
 
 ### 🔧 Logic
 - **logic_relay** - Logic relay for I/O system
+- **logic_case** - stores I/O outputs in a array up to 16 times
+- **logic_branch** - fires outputs based on true\false values
 - **math_counter** - Counter with mathematical operations
 
 ### 🚪 Triggers
 - **trigger_once** - Single-use trigger
 - **trigger_multiple** - Reusable trigger
 - **trigger_push** - Push entities in a direction
+- **trigger_teleport** - teleport entity on touch
 
 ### ℹ️ Info
 - **info_overlay** - Texture overlays
+- **info_teleport_destination** - destination and angles for teleported entitiy
 
 ## 🤝 Contributing
 
