@@ -7,3 +7,5 @@ script = ExtResource("1_daalt")
 metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
+billboard = 2
+texture_filter = 0
