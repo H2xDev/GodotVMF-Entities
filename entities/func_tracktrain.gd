@@ -52,6 +52,11 @@ func precache_sounds():
 	stop_sound = SoundManager.precache_sound(entity.get("StopSound", ""));
 	move_sound = SoundManager.precache_sound(entity.get("MoveSound", ""));
 
+func _on_move_sound_finished():
+	# Loop the move sound if the train is still moving
+	if is_instance_valid(move_player) and state != MovementState.STOPPED:
+		move_player.play(0.0);
+
 func reset_tween():
 	if current_tween != null:
 		current_tween.stop();
@@ -59,7 +64,11 @@ func reset_tween():
 
 		if state == MovementState.STOPPED:
 			SoundManager.play_sound(global_transform.origin, stop_sound);
-			if is_instance_valid(move_player): move_player.stop();
+			if is_instance_valid(move_player):
+				move_player.disconnect("finished", _on_move_sound_finished);
+				move_player.stop();
+				move_player.queue_free();
+				move_player = null;
 			trigger_output("OnStop");
 
 func move_to_current_point():
@@ -78,6 +87,10 @@ func move_to_current_point():
 	if state == MovementState.STOPPED:
 		SoundManager.play_sound(global_transform.origin, start_sound);
 		move_player = SoundManager.play_sound(global_transform.origin, move_sound);
+		# Disconnect the auto-cleanup and set up looping
+		if is_instance_valid(move_player):
+			move_player.disconnect("finished", move_player.queue_free);
+			move_player.connect("finished", _on_move_sound_finished);
 		trigger_output("OnStart");
 
 	state = MovementState.MOVING_FORWARD \
