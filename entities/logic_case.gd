@@ -17,8 +17,8 @@ func _entity_ready():
 		var case_key = "Case%02d" % i
 		var case_value = entity.get(case_key, "")
 		
-		# Convert to string first, then check if non-empty
-		var str_value = str(case_value)
+		# Convert to string first, trim whitespace, then check if non-empty
+		var str_value = str(case_value).strip_edges()
 		if str_value != "":
 			cases[str_value] = i
 			all_case_numbers.append(i)
@@ -35,23 +35,33 @@ func _reset_shuffle_pool():
 
 ## Compares the input value to stored case values and fires the matching output
 func InValue(param = null):
-	if param == null:
-		return
-	
 	if not enabled:
 		return
 	
-	# Convert param to string for comparison
-	var str_value = str(param)
+	# Get value from parameter or activator (math_counter)
+	var value = param if (param != null and str(param) != "" and str(param).to_lower() != "none") else (activator.value if activator != null else null)
+	if value == null:
+		return
 	
-	# Check if the value matches any case
+	# Convert to string for comparison (numeric -> int string, string -> trimmed)
+	var is_numeric = value is int or value is float
+	var str_value = str(int(value)) if is_numeric else str(value).strip_edges()
+	
+	# Try matching case value, then try numeric as case number, else default
+	var case_num: int
 	if str_value in cases:
-		var case_num = cases[str_value]
-		var output_name = "OnCase%02d" % case_num
-		trigger_output(output_name)
+		case_num = cases[str_value]
+	elif is_numeric:
+		case_num = int(value)
+		# Allow matching any case number 1-16, even if case parameter is empty
+		if case_num < 1 or case_num > 16:
+			trigger_output("OnDefault")
+			return
 	else:
-		# No match found, trigger OnDefault
 		trigger_output("OnDefault")
+		return
+	
+	trigger_output("OnCase%02d" % case_num)
 
 ## Fires a random output from the defined cases
 func PickRandom(_param = null):
