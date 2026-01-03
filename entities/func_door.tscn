@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxwdmqt2mtc15"]
+
+[ext_resource type="Script" path="res://entities/func_door.gd" id="1_x6hum"]
+
+[node name="FuncDoor" type="Node3D"]
+script = ExtResource("1_x6hum")
+
+[node name="body" type="StaticBody3D" parent="."]
+
+[node name="mesh" type="MeshInstance3D" parent="body"]
+skeleton = NodePath("../..")
+
+[node name="collision" type="CollisionShape3D" parent="body"]

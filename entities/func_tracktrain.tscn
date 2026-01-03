@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwjkeogtmwr8y"]
+
+[ext_resource type="Script" uid="uid://bok13arrpjpp2" path="res://entities/func_tracktrain.gd" id="1_y0bg2"]
+
+[node name="FuncTracktrain" type="Node3D"]
+script = ExtResource("1_y0bg2")
+
+[node name="body" type="RigidBody3D" parent="."]
+mass = 0.001
+gravity_scale = 0.0
+freeze = true
+freeze_mode = 1
+
+[node name="collision" type="CollisionShape3D" parent="body"]
+
+[node name="mesh" type="MeshInstance3D" parent="body"]
