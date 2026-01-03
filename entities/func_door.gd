@@ -1,13 +1,40 @@
 @tool
 class_name func_door
-extends ValveIONode
+extends VMFEntityNode
 
-@export var move_direction = Vector3(0, 0, 0);
-@export var move_distance = Vector3(0, 0, 0);
-@export var lip_vector = Vector3(0, 0, 0);
-@export var speed = 0.0;
-@export var volume = 1.0;
-@export var radius = 100.0;
+var move_direction: Vector3:
+	get: 
+		move_direction = get_movement_vector(entity.get("movedir", Vector3.ZERO)) if not move_direction else move_direction;
+		return move_direction;
+
+var move_distance: Vector3:
+	get:
+		if not $body/mesh.mesh:
+			push_error("Entity %s has no mesh assigned!" % entity.id);
+			return Vector3.ZERO;
+
+		move_distance = $body/mesh.mesh.get_aabb().size * move_direction if not move_distance else move_distance;
+		return move_distance;
+
+var lip_vector: Vector3:
+	get:
+		lip_vector = move_direction * entity.lip * config.import.scale if not lip_vector else lip_vector;
+		return lip_vector;
+
+var speed: float:
+	get: 
+		speed = entity.get("speed", 0.0) * config.import.scale if not speed else speed;
+		return speed;
+
+var volume: float:
+	get:
+		volume = entity.get("volume", 10.0) / 10.0 if not volume else volume;
+		return volume;
+
+var radius: float:
+	get:
+		radius = entity.get("radius", 100.0 / config.import.scale) * config.import.scale if not radius else radius;
+		return radius
 
 const FLAG_NON_SOLID = 4;
 const FLAG_PASSABLE = 8;
@@ -24,26 +51,21 @@ var is_open = false;
 var is_locked = false;
 var open_sound = null;
 var close_sound = null;
+var stop_sound = null;
 var current_tween = null;
+var current_movement_sound = null;
 
-func _apply_entity(e):
-	super._apply_entity(e);
+func _entity_setup(_e: VMFEntity) -> void:
+	var mesh = get_mesh();
+	if not mesh:
+		push_error("Invalid entity %s" % entity.id);
 
-	$body/mesh.set_mesh(get_mesh());
+	$body/mesh.set_mesh(mesh);
 
 	if not has_flag(FLAG_NON_SOLID):
 		$body/collision.shape = get_entity_shape();
 	else:
 		$body/collision.queue_free();
-
-	move_direction = get_movement_vector(e.movedir);
-	move_distance = $body/mesh.mesh.get_aabb().size * move_direction;
-
-	speed = e.speed * config.import.scale;
-	lip_vector = move_direction * e.lip * config.import.scale;
-	
-	volume = e.get("volume", 10.0) / 10.0;
-	radius = e.get("radius", 100.0 / config.import.scale) * config.import.scale;
 
 func _entity_ready():
 	start_position = position;
@@ -57,11 +79,9 @@ func _entity_ready():
 	await get_tree().create_timer(0.001).timeout;
 	move_door.call_deferred(float(spawnpos), true);
 
-	open_sound = entity.get("noise1", null);
-	close_sound = entity.get("startclosesound", null);
-
-	if open_sound: SoundManager.precache_sound(open_sound);
-	if close_sound: SoundManager.precache_sound(close_sound);
+	open_sound = SoundManager.precache_sound(entity.get("noise1", null));
+	stop_sound = SoundManager.precache_sound(entity.get("noise2", null));
+	close_sound = SoundManager.precache_sound(entity.get("closesound", null));
 
 ## 0.0 = closed, 1.0 = open
 func move_door(target_value: float = 0.0, instant: bool = false):
@@ -89,11 +109,26 @@ func Open(_param):
 
 	trigger_output("OnOpen");
 	
+	# Stop any existing movement sound
+	if current_movement_sound:
+		current_movement_sound.stop();
+		current_movement_sound = null;
+	
 	if open_sound:
-		var snd = SoundManager.play_sound(global_transform.origin, open_sound, volume);
-		if snd: snd.max_distance = radius;
+		current_movement_sound = SoundManager.play_sound(global_transform.origin, open_sound, volume);
+		if current_movement_sound: current_movement_sound.max_distance = radius;
 
 	await move_door(1.0);
+	
+	# Stop the movement sound when door finishes moving
+	if current_movement_sound:
+		current_movement_sound.stop();
+		current_movement_sound = null;
+	
+	if stop_sound:
+		var snd = SoundManager.play_sound(global_transform.origin, stop_sound, volume);
+		if snd: snd.max_distance = radius;
+	
 	trigger_output("OnFullyOpen");
 
 func Unlock(_param):
@@ -110,18 +145,40 @@ func Close(_param):
 
 	trigger_output("OnClose");
 
-	var snd: AudioStreamPlayer3D;
+	# Stop any existing movement sound
+	if current_movement_sound:
+		current_movement_sound.stop();
+		current_movement_sound = null;
 
 	if close_sound:
-		snd = SoundManager.play_sound(global_transform.origin, close_sound, volume);
-	else: if open_sound:
-		snd = SoundManager.play_sound(global_transform.origin, open_sound, volume);
+		current_movement_sound = SoundManager.play_sound(global_transform.origin, close_sound, volume);
+	elif open_sound:
+		current_movement_sound = SoundManager.play_sound(global_transform.origin, open_sound, volume);
 
-	if snd: snd.max_distance = radius;
+	if current_movement_sound: current_movement_sound.max_distance = radius;
 
 	await move_door(0.0);
+	
+	# Stop the movement sound when door finishes moving
+	if current_movement_sound:
+		current_movement_sound.stop();
+		current_movement_sound = null;
+	
+	if stop_sound:
+		var snd_stop = SoundManager.play_sound(global_transform.origin, stop_sound, volume);
+		if snd_stop: snd_stop.max_distance = radius;
+	
 	trigger_output("OnFullyClosed");
 
 func Toggle(_param = null):
 	if is_open: Close(_param);
 	else: Open(_param);
+
+func _interact(_player: Player):
+	if not has_flag(FLAG_TOUCH_OPENS):
+		return;
+	
+	if is_locked:
+		return;
+	
+	Toggle(null);
