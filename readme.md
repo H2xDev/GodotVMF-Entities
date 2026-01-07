@@ -36,6 +36,7 @@ This library provides pre-implemented Source Engine entities that seamlessly int
 - **func_rotating** - Rotating brushes
 
 ### 🔧 Logic
+- **logic_auto** - Fires outputs on map load
 - **logic_relay** - Logic relay for I/O system
 - **logic_case** - stores I/O outputs in a array up to 16 times
 - **logic_branch** - fires outputs based on true\false values
