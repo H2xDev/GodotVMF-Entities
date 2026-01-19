@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bisby5mgki3mb"]
+
+[ext_resource type="Script" uid="uid://f2fi1phs12fu" path="res://entities/env_entity_maker.gd" id="1_q5gir"]
+
+[node name="EnvEntityMaker" type="Node3D"]
+script = ExtResource("1_q5gir")
+metadata/_custom_type_script = "uid://dw23cwrsbhvmi"
